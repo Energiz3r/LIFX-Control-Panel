@@ -205,17 +205,15 @@ class LightFrame(ttk.Labelframe):  # pylint: disable=too-many-ancestors
     def _setup_special_functions(self):
         # Color cycle
         self.threads["cycle"] = color_thread.ColorThreadRunner(
-            self.target,
-            color_thread.color_cycle,
-            self
+            self.target, color_thread.ColorCycle(), self
         )
+
         def start_color_cycle():
             self.color_cycle_btn.config(bg="Green")
             self.threads["cycle"].start()
+
         self.color_cycle_btn = tkinter.Button(
-            self.special_functions_lf,
-            text="Color Cycle",
-            command=start_color_cycle,
+            self.special_functions_lf, text="Color Cycle", command=start_color_cycle,
         )
         self.color_cycle_btn.grid(row=9, column=0)
         # Screen Avg.
@@ -225,6 +223,7 @@ class LightFrame(ttk.Labelframe):  # pylint: disable=too-many-ancestors
             self,
             func_bounds=self.get_monitor_bounds,
         )
+
         def start_screen_avg():
             """ Allow the screen avg. to be run in a separate thread. Also turns button green while running. """
             self.avg_screen_btn.config(bg="Green")
@@ -608,7 +607,11 @@ class LightFrame(ttk.Labelframe):  # pylint: disable=too-many-ancestors
         run_once - Don't call `after` statement at end. Keeps a million workers from being instanced.
         """
         require_icon_update = False
-        if not self.master.bulb_interface.power_queue[self.label].empty():
+        power_queue = self.master.bulb_interface.power_queue
+        if (
+            self.label in power_queue
+            and not self.master.bulb_interface.power_queue[self.label].empty()
+        ):
             power = self.master.bulb_interface.power_queue[self.label].get()
             require_icon_update = True
             self.tk_power_var.set(power)
@@ -620,7 +623,11 @@ class LightFrame(ttk.Labelframe):  # pylint: disable=too-many-ancestors
                 self.option_on.select()
                 self.option_off.selection_clear()
 
-        if not self.master.bulb_interface.color_queue[self.label].empty():
+        color_queue = self.master.bulb_interface.color_queue
+        if (
+            self.label in color_queue
+            and not self.master.bulb_interface.color_queue[self.label].empty()
+        ):
             hsbk = self.master.bulb_interface.color_queue[self.label].get()
             require_icon_update = True
             for key, _ in enumerate(self.hsbk):
